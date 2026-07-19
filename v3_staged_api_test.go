@@ -10,13 +10,9 @@ import (
 	"github.com/gosnmp/gosnmp"
 )
 
-func TestV3PacketDecoderPublicAPI(t *testing.T) {
+func TestV3PacketDecoderPublicAPI(_ *testing.T) {
 	params := &gosnmp.GoSNMP{}
-	var constructor func([]byte) (*gosnmp.V3PacketDecoder, error)
-	constructor = params.NewV3PacketDecoder
-	if constructor == nil {
-		t.Fatal("NewV3PacketDecoder is nil")
-	}
+	_ = params.NewV3PacketDecoder
 
 	var decoder *gosnmp.V3PacketDecoder
 	_ = decoder.Header

@@ -171,10 +171,10 @@ func (c *stagedBERCursor) readTLV() (stagedBERTLV, error) {
 		return stagedBERTLV{}, err
 	}
 	c.pos += consumed
-	if length > uint64(len(c.data)-c.pos) {
+	if length > uint64(len(c.data)-c.pos) { //nolint:gosec // Остаток буфера неотрицателен.
 		return stagedBERTLV{}, errInvalidStagedBER
 	}
-	valueLength := int(length)
+	valueLength := int(length) //nolint:gosec // Граница проверена относительно доступного int-sized буфера.
 	valueOffset := c.base + c.pos
 	value := c.data[c.pos : c.pos+valueLength]
 	c.pos += valueLength

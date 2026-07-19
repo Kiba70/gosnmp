@@ -25,22 +25,22 @@ func TestV3PacketDecoderSeparatesStages(t *testing.T) {
 	if header.EngineBoots != 1 || header.EngineTime != 2 || header.UserName != "probe" {
 		t.Fatalf("wire header = %+v", header)
 	}
-	if err := decoder.Authenticate(receiver); err != nil {
-		t.Fatalf("Authenticate: %v", err)
+	if authErr := decoder.Authenticate(receiver); authErr != nil {
+		t.Fatalf("Authenticate: %v", authErr)
 	}
-	if err := decoder.Decrypt(); !errors.Is(err, ErrInvalidV3DecodeStage) {
-		t.Fatalf("Decrypt without timeliness error = %v", err)
+	if decryptErr := decoder.Decrypt(); !errors.Is(decryptErr, ErrInvalidV3DecodeStage) {
+		t.Fatalf("Decrypt without timeliness error = %v", decryptErr)
 	}
-	if err := decoder.ValidateTimeliness(func(header V3PacketHeader) error {
+	if timelinessErr := decoder.ValidateTimeliness(func(header V3PacketHeader) error {
 		if header.EngineBoots != 1 || header.EngineTime != 2 {
 			t.Fatalf("timeliness header = %+v", header)
 		}
 		return nil
-	}); err != nil {
-		t.Fatalf("ValidateTimeliness: %v", err)
+	}); timelinessErr != nil {
+		t.Fatalf("ValidateTimeliness: %v", timelinessErr)
 	}
-	if err := decoder.Decrypt(); err != nil {
-		t.Fatalf("Decrypt: %v", err)
+	if decryptErr := decoder.Decrypt(); decryptErr != nil {
+		t.Fatalf("Decrypt: %v", decryptErr)
 	}
 	packet, err := decoder.DecodePayload()
 	if err != nil {
@@ -109,14 +109,14 @@ func TestV3PacketDecoderAuthPriv(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewV3PacketDecoder: %v", err)
 	}
-	if err := decoder.Authenticate(receiver); err != nil {
-		t.Fatalf("Authenticate: %v", err)
+	if authErr := decoder.Authenticate(receiver); authErr != nil {
+		t.Fatalf("Authenticate: %v", authErr)
 	}
-	if err := decoder.ValidateTimeliness(func(V3PacketHeader) error { return nil }); err != nil {
-		t.Fatalf("ValidateTimeliness: %v", err)
+	if timelinessErr := decoder.ValidateTimeliness(func(V3PacketHeader) error { return nil }); timelinessErr != nil {
+		t.Fatalf("ValidateTimeliness: %v", timelinessErr)
 	}
-	if err := decoder.Decrypt(); err != nil {
-		t.Fatalf("Decrypt: %v", err)
+	if decryptErr := decoder.Decrypt(); decryptErr != nil {
+		t.Fatalf("Decrypt: %v", decryptErr)
 	}
 	packet, err := decoder.DecodePayload()
 	if err != nil {
@@ -251,14 +251,14 @@ func TestV3PacketDecoderNoAuthWithoutCredentials(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewV3PacketDecoder: %v", err)
 	}
-	if err := decoder.Authenticate(nil); err != nil {
-		t.Fatalf("Authenticate: %v", err)
+	if authErr := decoder.Authenticate(nil); authErr != nil {
+		t.Fatalf("Authenticate: %v", authErr)
 	}
-	if err := decoder.ValidateTimeliness(func(V3PacketHeader) error { return nil }); err != nil {
-		t.Fatalf("ValidateTimeliness: %v", err)
+	if timelinessErr := decoder.ValidateTimeliness(func(V3PacketHeader) error { return nil }); timelinessErr != nil {
+		t.Fatalf("ValidateTimeliness: %v", timelinessErr)
 	}
-	if err := decoder.Decrypt(); err != nil {
-		t.Fatalf("Decrypt: %v", err)
+	if decryptErr := decoder.Decrypt(); decryptErr != nil {
+		t.Fatalf("Decrypt: %v", decryptErr)
 	}
 	decoded, err := decoder.DecodePayload()
 	if err != nil {
@@ -278,7 +278,7 @@ func TestV3PacketDecoderNoAuthUserRequiresCredentials(t *testing.T) {
 	if err != nil {
 		t.Fatalf("NewV3PacketDecoder: %v", err)
 	}
-	if err := decoder.Authenticate(nil); err == nil {
+	if authErr := decoder.Authenticate(nil); authErr == nil {
 		t.Fatal("ordinary noAuth packet accepted without credentials")
 	}
 	decoder, err = params.NewV3PacketDecoder(raw)
@@ -378,7 +378,7 @@ func FuzzV3PacketDecoder(f *testing.F) {
 	f.Add(marshalStagedInform(f, AuthNoPriv, SHA, NoPriv))
 	f.Add([]byte{byte(Sequence), 0x84, 0xff, 0xff, 0xff, 0xff})
 	params := newTestGoSNMPv3(AuthPriv, nil)
-	f.Fuzz(func(t *testing.T, raw []byte) {
+	f.Fuzz(func(_ *testing.T, raw []byte) {
 		decoder, err := params.NewV3PacketDecoder(raw)
 		if err == nil {
 			_ = decoder.Header()
@@ -420,7 +420,7 @@ func marshalStagedInform(tb testing.TB, flags SnmpV3MsgFlags, auth SnmpV3AuthPro
 }
 
 func stagedSecurityParameters(boots, engineTime uint32, auth SnmpV3AuthProtocol, privacy SnmpV3PrivProtocol) *UsmSecurityParameters {
-	return &UsmSecurityParameters{
+	return &UsmSecurityParameters{ //nolint:gosec // Значения используются только в тестах.
 		AuthoritativeEngineID:    string([]byte{0x80, 0x00, 0x1f, 0x80, 0x05, 1, 2, 3, 4, 5, 6, 7}),
 		AuthoritativeEngineBoots: boots,
 		AuthoritativeEngineTime:  engineTime,
