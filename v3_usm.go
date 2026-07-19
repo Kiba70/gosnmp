@@ -249,13 +249,13 @@ func (sp *UsmSecurityParameters) Copy() SnmpV3SecurityParameters {
 		AuthoritativeEngineTime:  sp.AuthoritativeEngineTime,
 		UserName:                 sp.UserName,
 		AuthenticationParameters: sp.AuthenticationParameters,
-		PrivacyParameters:        sp.PrivacyParameters,
+		PrivacyParameters:        append([]byte(nil), sp.PrivacyParameters...),
 		AuthenticationProtocol:   sp.AuthenticationProtocol,
 		PrivacyProtocol:          sp.PrivacyProtocol,
 		AuthenticationPassphrase: sp.AuthenticationPassphrase,
 		PrivacyPassphrase:        sp.PrivacyPassphrase,
-		SecretKey:                sp.SecretKey,
-		PrivacyKey:               sp.PrivacyKey,
+		SecretKey:                append([]byte(nil), sp.SecretKey...),
+		PrivacyKey:               append([]byte(nil), sp.PrivacyKey...),
 		localDESSalt:             sp.localDESSalt,
 		localAESSalt:             sp.localAESSalt,
 		Logger:                   sp.Logger,
@@ -474,7 +474,7 @@ func cachedPasswordToKey(hash hash.Hash, cacheKey string, password string) ([]by
 func hMAC(hash crypto.Hash, cacheKey string, password string, engineID string) ([]byte, error) {
 	hashed, err := cachedPasswordToKey(hash.New(), cacheKey, password)
 	if err != nil {
-		return []byte{}, nil
+		return nil, err
 	}
 
 	local := hash.New()
